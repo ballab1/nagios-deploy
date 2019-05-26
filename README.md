@@ -1,0 +1,1 @@
+# generic nagios environment

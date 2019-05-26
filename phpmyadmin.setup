@@ -1,0 +1,39 @@
+#!/bin/bash
+
+#############################################################################
+#
+#   initialization for phpmyadmin
+#
+#############################################################################
+declare -r config_dir=${CONFIG_DIR:?}
+declare -r workspace_dir=${WORKSPACE_DIR:?}
+
+declare -r libs="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../libs" 
+
+
+declare dumps_dir="${workspace_dir}/mysql/loader/dumps"
+if [ ! -e "${dumps_dir}/phpmyadmin.sql" ]; then
+    mkdir -p "$dumps_dir" ||:
+    cp "${config_dir}/phpmyadmin"/*.sql "${dumps_dir}"/
+fi 
+
+
+# update dbms access for zen
+declare -r yaml="${workspace_dir}/docker-compose.yml"
+declare -r dc_json="$(docker.yamlToJson "$yaml")"
+declare -r mysql_root_password="$(deploy.passwordSecret "$dc_json" 'mysql' 'MYSQL_ROOT_PASSWORD' )"
+declare -r pma_pass="$(deploy.passwordSecret "${dc_json}" 'phpmyadmin' 'PMA_PASSWORD' )"
+declare pma_user=$(jq '.services.phpmyadmin.environment.PMA_USER' <<< "$dc_json" | tr -d '"' )
+pma_user="$(eval echo "$pma_user")"
+
+cat <<-PMA_USER > "${workspace_dir}/mysql/loader/phpmyadmin_user.sh"
+#!/bin/bash
+
+cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
+    CREATE DATABASE IF NOT EXISTS phpmyadmin;
+    CREATE USER IF NOT EXISTS '${pma_user}'@'%';
+    SET PASSWORD FOR '${pma_user}'@'%' = PASSWORD('${pma_pass}');
+    GRANT ALL PRIVILEGES ON *.* TO '${pma_user}'@'%' WITH GRANT OPTION;
+EOSQL
+
+PMA_USER

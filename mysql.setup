@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#############################################################################
+#
+#   initialization for mysql
+#
+#############################################################################
+
+declare -r config_dir=${CONFIG_DIR:?}
+declare -r workspace_dir=${WORKSPACE_DIR:?} 
+
+declare loader_dir="${workspace_dir}/mysql/loader"
+[ -d "${loader_dir}/dumps" ] && exit 0
+
+mkdir -p "${loader_dir}/dumps" ||:
+cp -r "${config_dir}/mysql"/* "$loader_dir"/

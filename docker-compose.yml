@@ -1,0 +1,160 @@
+version: '3.3'
+
+services:
+    mysql:
+#        command: --default-authentication-plugin=mysql_native_password
+        container_name: mysql
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+            MYSQL_PASSWORD_FILE: /run/secrets/mysql.pwd
+            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root.pwd
+            MYSQL_USER: ${CFG_USER:?}
+            TZ: America/New_York
+        hostname: mysql
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}mysql:${MYSQL_VERSION:-5.7.23}
+#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql:${MYSQL_VERSION:-5.7.23}
+#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-5.7.23}:${CONTAINER_TAG:-dev}
+#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-8.0.11}:${CONTAINER_TAG:-dev}
+#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-8.0.12}:${CONTAINER_TAG:-dev}
+        logging:
+            driver: json-file
+            options:
+                max-file: "3"
+                max-size: "10m"
+        ports:
+            - "3306:3306"
+        restart: unless-stopped
+        secrets:
+            - mysql.pwd
+            - mysql_root.pwd
+        volumes:
+            - ./mysql/conf.d:/etc/mysql/conf.d
+            - ./mysql/data:/var/lib/mysql
+            - ./mysql/loader:/docker-entrypoint-initdb.d
+            - ./mysql/log:/var/log
+
+
+    nagios:
+        container_name: nagios
+        environment:
+            DEBUG_TRACE: ${DEBUG_TRACE:-0}
+#            NAGIOS_GITHUB_CREDENTIALS_FILE: /run/secrets/github.credentials
+#            NAGIOS_GITHUB_EMAIL: ${CFG_EMAIL:?}
+#            NAGIOS_GITHUB_NAME: ${CFG_NAME:?}
+            NAGIOS_PASS_FILE: /run/secrets/nagios.pwd
+#            NAGIOS_REPO: github.com/ballab1/DBMS-backup
+            NAGIOS_USER: ${CFG_USER:?}
+            NAGIOS_URL_HTML_PATH: /
+            NCONF_DBHOST: mysql
+            NCONF_DBNAME: nconf
+            NCONF_DBPASS_FILE: /run/secrets/mysql.pwd
+            NCONF_DBUSER: ${CFG_USER:?}
+            SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd         
+            SUPERVISORD_USER: ${CFG_USER:?}
+        extra_hosts:
+            - \"docker-host:${HOST_IP:?}\"
+        hostname: nagios
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.3}:${CONTAINER_TAG:-3c05373ca2f0e9021d39d8a4b37b2a0a90234ac3264e457bebe5743591976fdb}
+        links:
+            - mysql:mysql
+        logging:
+            driver: json-file
+            options:
+                max-file: "3"
+                max-size: "10m"
+        ports:
+            - "25:25"
+            - "80:80"
+            - "9001:9001"
+        restart: unless-stopped
+        secrets:
+            - github.credentials
+            - mysql.pwd
+            - nagios.pwd
+            - supervisord.pwd
+        volumes:
+            - ./nagios/archives:/usr/local/nagios/var/archives
+            - ./nagios/config:/usr/local/nagios/share/nconf/output
+            - ./nagios/log:/var/log
+            - ./nagios/rrd:/usr/local/nagios/var/rrd
+
+    phpmyadmin:
+        container_name: phpmyadmin
+        environment:
+            DEBUG_TRACE: ${DEBUG_TRACE:-0}
+#            MYSQL_PASSWORD_FILE: /run/secrets/mysql.pwd
+#            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root.pwd
+#            MYSQL_USER: ${CFG_USER:?}
+#            PMA_ABSOLUTE_URI: http://255.255.255.255:8002/phpmyadmin
+#            PMA_ARBITRARY: 1
+            PMA_HOST: mysql
+            PMA_PASSWORD_FILE: /run/secrets/pma.pwd
+            PMA_PORT: 3306
+            PMA_USER: ${CFG_USER:?}
+            PMA_VERBOSE: 1
+            SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd
+            SUPERVISORD_USER: ${CFG_USER:?}
+            USER: www-data
+        hostname: phpmyadmin
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.8.5}:${CONTAINER_TAG:-fb5d96284472a25362b58a90d632822df8b8b35c5dbd4089ec2bf2dd13f4afbf}
+        links:
+            - mysql:mysql
+        logging:
+            driver: json-file
+            options:
+                max-file: "3"
+                max-size: "10m"
+        ports:
+            - "8002:80"
+            - "9102:9000"
+            - "9002:9001"
+        restart: unless-stopped
+        secrets:
+#            - mysql.pwd
+#            - mysql_root.pwd
+            - pma.pwd
+            - supervisord.pwd
+        volumes:
+            - ./phpmyadmin/log:/var/log
+#            - ./phpmyadmin/etc:/etc/phpmyadmin
+networks:
+   default:
+       ipam:
+           config:
+               - subnet: 192.168.96.0/24
+
+secrets:
+   github.credentials:
+     file: .secrets/secrets/credentials.github
+   grafana_admin.pwd:
+     file: .secrets/secrets/grafana_admin.pwd
+   kafka.secret:
+     file: .secrets/secrets/kafkamgr.secret
+   kafka_manager.pwd:
+     file: .secrets/secrets/bobb.pwd
+   mysql.pwd:
+     file: .secrets/secrets/bobb.pwd
+   mysql_root.pwd:
+     file: .secrets/secrets/bobb.pwd
+   nagios.pwd:
+     file: .secrets/secrets/bobb.pwd
+   pma.pwd:
+     file: .secrets/secrets/bobb.pwd
+#   github.token:
+#     file: .secrets/secrets/hubot_token.github
+   slack.token:
+     file: .secrets/secrets/hubot_token.slack
+   supervisord.pwd:      
+     file: .secrets/secrets/bobb.pwd
+   web_user.pwd:
+     file: .secrets/secrets/bobb.pwd
+   webdav.pwd:
+     file: .secrets/secrets/bobb.pwd
+   zenphoto.pwd:
+     file: .secrets/secrets/bobb.pwd
+   certificate.crt:
+     file: .secrets/ssl/server.crt
+   server.key:
+     file: .secrets/ssl/server.key
+   dhparam.pem:
+     file: .secrets/ssl/dhparam.pem

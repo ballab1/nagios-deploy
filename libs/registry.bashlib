@@ -33,6 +33,7 @@ function registry.createTime()
         fi
     fi
 
+    # show error info to stderr
     {
     echo -en '    \e[93m'
     echo "unable to parse time from manifest returned for $name:${tags[0]}"
@@ -216,21 +217,6 @@ function registry.manifest()
 export -f registry.manifest
 
 #----------------------------------------------------------------------------------------------
-function registry.matchRepos()
-{
-    local -a args=( "$@" )
-    [ $# -gt 0 ] || args=( '.+' )
-
-    # registry.catalog | grep -E -f <(printf '%s\n' "${args[@]}")
-
-    local tmpfile="$(mktemp)"
-    printf '%s\n' "${args[@]}" > "$tmpfile"
-    registry.catalog | grep -E -f "$tmpfile"
-    rm "$tmpfile"
-}
-export -f registry.matchRepos
-
-#----------------------------------------------------------------------------------------------
 function registry.POST()
 {
     registry.io --request POST "$@" || return 1
@@ -270,7 +256,7 @@ function registry.push()
         local fp="$(docker inspect "$image" | jq -r '.[].Config.Labels."container.fingerprint"?')"
         if [ "${fp:-}" ]; then
             allImages+=( "${image%:*}:${fp}" )
-            docker tag "$image" "${image%:*}:${fp}"  > /dev/null 2>&1 || : # ignore any errors
+            docker tag "$image" "${image%:*}:${fp}"  > /dev/null 2>&1 ||: # ignore errors
         fi
     done
     [ "${#allImages[*]}" -gt 0 ] || trap.die 'no valid images found'
@@ -278,21 +264,19 @@ function registry.push()
 
     local attempt
     for image in "${allImages[@]}"; do
+        local -i wasPushed=0
         for attempt in {0..2}; do
             term.log "    Pushing ${image}"'\n' 'lt_blue'
-            docker push "$image" && break
-            [ $attempt -eq 2 ] && trap.die "Failed to push $image"
+            docker push "$image" && wasPushed=1 && break
             echo 'retrying...'
         done
+        [ $wasPushed -eq 0 ] && trap.die "Failed to push $image"
     done
 
     for image in "${allImages[@]}"; do
         local -i wasTagged=0
         for inp in "${images[@]}"; do
-            if [ "$inp" = "$image" ]; then
-                wasTagged=1
-                break
-            fi
+            [ "$inp" = "$image" ] && wasTagged=1 && break
         done
         [ "$wasTagged" -eq 1 ] || docker rmi "$image"
     done
@@ -305,112 +289,6 @@ function registry.PUT()
     registry.io --request PUST "$@" || return 1
 }
 export -f registry.PUT
-
-#----------------------------------------------------------------------------------------------
-function registry.removeTag()
-{
-    local image=${1:?}
-    image=${image#$(registry.SERVER)}
-
-    local name="${image%:*}"
-    local xtag="${image##*:}"
-
-    local digests="$(registry.digests "$name")"
-    local -a tags
-    mapfile -t tags < <(jq -r 'select(.tags|contains(["master"]))|.tags[]' <<< "${digests}" )
-    [ "${#tags[*]}" -gt 0 ] || trap.die "repository: ${name} - does not exist"
-
-    local -i pulledImageExists=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -cH "$(registry.SERVER)$image" | awk -F ':' '{print $2}' ||:)
-    [ "$pulledImageExists" -gt 0 ] || docker pull "$(registry.SERVER)$image"
-    registry.deleteImages "$image"
-
-    if [ "${#tags[*]}" -gt 1 ]; then
-        for tag in "${tags[@]}"; do
-            [ "$tag" != "$xtag" ] || continue
-            echo "pushing $(registry.SERVER)${name}:$tag"
-            docker tag "$(registry.SERVER)$image" "$(registry.SERVER)${name}:$tag"
-            docker push "$(registry.SERVER)${name}:$tag"
-            docker rmi "$(registry.SERVER)${name}:$tag"
-        done
-        [ "$pulledImageExists" -gt 0 ] || echo docker rmi "$(registry.SERVER)$image"
-    fi
-}
-export -f registry.removeTag
-
-#----------------------------------------------------------------------------------------------
-function registry.rename()
-{
-    local src=${1:?}
-    local dst=${2:?}
-
-    # strip name of server
-    src=${src#$(registry.SERVER)}
-    dst=${dst#$(registry.SERVER)}
-
-    local srcName="${src%:*}"
-    local srcTag="${src##*:}"
-    [ "${srcName:-}" ] && [ "${srcTag:-}" ] || trap.die "Invalid $src specified"
-
-    local dstName="${dst%:*}"
-    local dstTag="${dst##*:}"
-
-    [ "${dstTag:-}" ] || dstTag="$srcTag"
-    [ "${dstName:-}" ] && [ "$dstName" != "$dstTag" ] || $dstName="$srcName"
-    [ "$srcName" != "$dstName" ] || [ "$srcTag" != "$dstTag" ] || trap.die "$src & $dst specify same image"
-
-    local exists=$(docker image ls --quiet "$(registry.SERVER)$src")
-    [ "${exists:-}" ] || docker pull "$(registry.SERVER)$src"
-    docker tag "$(registry.SERVER)$src" "$(registry.SERVER)${dstName}:$dstTag"
-    registry.push 0 "$(registry.SERVER)${dstName}:$dstTag"
-    [ "${exists:-}" ] || docker rmi "$(registry.SERVER)$src"
-    registry.deleteImage "$(registry.SERVER)$src"
-}
-export -f registry.rename
-
-#----------------------------------------------------------------------------------------------
-function registry.repoRetention()
-{
-    local image=${1:?}
-    local -i maxImages=${2:-MAX_IMAGES_TO_KEEP}
-
-    local name="${image%:*}"                     # strip tag from image name
-    name="${name//$(registry.SERVER)}"           # strip registry from name
-    local digests="$(registry.digests "$name")"
-
-    local -ir imageCount=$(jq '.|length' <<< "$digests")
-    if [ $imageCount -ge $maxImages ]; then
-        local -ir delta=$(( imageCount - maxImages + 1 ))
-        [ $delta -le 1 ] || term.log "    repo ${name} contains ${delta} images over recommended limit"'\n' 'lt_yellow'
-        local -a oldImages
-        mapfile -t oldImages < <(jq -r "[select((.tags|length) == 1)]|sort_by(.createTime|fromdate)|.[0:${delta}]|.[].digest" <<< "$digests")
-        if [ "${#oldImages[*]}" -gt 0 ]; then
-            for digest in "${oldImages[@]}"; do
-                registry.deleteImage "$name" "$digest"
-            done
-        fi
-    fi
-}
-export -f registry.repoRetention
-
-#----------------------------------------------------------------------------------------------
-function registry.reportCatalogAsJson()
-{
-    local -a catalog=( "$@" )
-    mapfile -t catalog < <(registry.matchRepos "${catalog[@]}" | sort)
-
-    local -i index=0
-    echo -n '['
-    for entry in "${catalog[@]}"; do
-        (( index++ )) && echo -n ','
-
-        local digests="$(registry.digests "$entry")"
-        printf '{"id":"%05d","repository":"%s"' "$index" "$entry"
-        [ -z "$digests" ] || echo -n ',"digests":['"${digests}]"
-        echo -n '}'
-    done
-    echo -n ']'
-}
-export -f registry.reportCatalogAsJson
 
 #----------------------------------------------------------------------------------------------
 function registry.SERVER()

@@ -12,10 +12,6 @@ services:
             TZ: America/New_York
         hostname: mysql
         image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}mysql:${MYSQL_VERSION:-5.7.23}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql:${MYSQL_VERSION:-5.7.23}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-5.7.23}:${CONTAINER_TAG:-dev}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-8.0.11}:${CONTAINER_TAG:-dev}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-8.0.12}:${CONTAINER_TAG:-dev}
         logging:
             driver: json-file
             options:
@@ -44,11 +40,12 @@ services:
             NAGIOS_PASS_FILE: /run/secrets/nagios.pwd
 #            NAGIOS_REPO: github.com/ballab1/DBMS-backup
             NAGIOS_USER: ${CFG_USER:?}
-            NAGIOS_URL_HTML_PATH: /
+#            NAGIOS_URL_HTML_PATH: /
             NCONF_DBHOST: mysql
             NCONF_DBNAME: nconf
             NCONF_DBPASS_FILE: /run/secrets/mysql.pwd
             NCONF_DBUSER: ${CFG_USER:?}
+            PWD_PROTECTED: 'true'
             SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd         
             SUPERVISORD_USER: ${CFG_USER:?}
         extra_hosts:
@@ -77,6 +74,7 @@ services:
             - ./nagios/config:/usr/local/nagios/share/nconf/output
             - ./nagios/log:/var/log
             - ./nagios/rrd:/usr/local/nagios/var/rrd
+#            - ./nagios/etc:/usr/local/nagios/etc
 
     phpmyadmin:
         container_name: phpmyadmin

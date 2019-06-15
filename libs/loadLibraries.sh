@@ -38,7 +38,6 @@ function __init.loader() {
             source "$__lib"
         done
         echo -e '\e[0m'
-        unset __lib
     fi
     [ ! -e "${__libdir}/init.cache" ] || source "${__libdir}/init.cache"
 }

@@ -85,7 +85,7 @@ services:
 #            MYSQL_PASSWORD_FILE: /run/secrets/mysql.pwd
 #            MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root.pwd
 #            MYSQL_USER: ${CFG_USER:?}
-#            PMA_ABSOLUTE_URI: http://255.255.255.255:8002/phpmyadmin
+#            PMA_ABSOLUTE_URI: http://${HOST_IP:?}:8002/phpmyadmin
 #            PMA_ARBITRARY: 1
             PMA_HOST: mysql
             PMA_PASSWORD_FILE: /run/secrets/pma.pwd

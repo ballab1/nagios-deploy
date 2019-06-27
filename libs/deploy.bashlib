@@ -439,7 +439,9 @@ function deploy.refreshContainers()
     local -r dc_yaml=${1:?}
 
     # make sure we start the correct versions
-    if [ "${CONTAINER_TAG:-}" = 'latest' ]; then
+    if [ "$(deploy.containerTag)"  = 'dev' ]; then
+        return 0
+    elif [ "${CONTAINER_TAG:-}" = 'latest' ]; then
         term.log '\nINFO: updating containers to latest versions\n' 'white'
     else
         term.log '\n'"INFO: using container fingerprints defined in docker-compose.yml"'\n' 'white'

@@ -26,6 +26,7 @@ function registry.createTime()
 
     local -r manifests="$(registry.manifest "$name" "${tags[0]}")"
     if [ "$manifests" ] && [[ ! $manifests =~ MANIFEST_INVALID ]]; then
+#        local fslayers=$(jq -r 'try [ .fsLayers|length ]' <<< "$manifests")
         local createTime=$(jq -r 'try [ .history[].v1Compatibility|fromjson.created | sub("\\.\\d+Z"; "Z") | fromdate] | max | todate' <<< "$manifests")
         if [ "$createTime" ]; then
             echo "$createTime"
@@ -65,7 +66,7 @@ function registry.deleteImage()
     local -r name=${1:?}
     local -r digest=${2:?}
 
-    echo -n "deleting ${name} - $digest  "
+    echo -n "deleting ${name}@$digest  "
     registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest" || echo "Failed to delete $name:$digest"
     echo
 }
@@ -88,6 +89,20 @@ export -f registry.digest
 
 #----------------------------------------------------------------------------------------------
 function registry.digests()
+{
+    local -r name=${1:?}
+    local -r no_times=${2:-}
+
+    if [ -z "${no_times:-}" ]; then
+        registry.digestsWithTimes "$name"
+    else
+        registry.digestsWithoutTimes "$name"
+    fi
+}
+export -f registry.digests
+
+#----------------------------------------------------------------------------------------------
+function registry.digestsWithTimes()
 {
     local -r name=${1:?}
 
@@ -139,7 +154,50 @@ function registry.digests()
         echo -n '"'"${tag}"'"]}'
     done
 }
-export -f registry.digests
+export -f registry.digestsWithTimes
+
+#----------------------------------------------------------------------------------------------
+function registry.digestsWithoutTimes()
+{
+    local -r name=${1:?}
+
+    local -a tags=()
+    mapfile -t tags < <(registry.tags "$name")
+    [ "${#tags[*]}" -gt 0 ] || return 0
+
+
+    local tag digest
+    local -A digests=()
+    for tag in "${tags[@]}"; do
+        digest=$(registry.digest "$name" "$tag")
+        if [ -z "${digest:-}" ]; then
+            term.log "WARNING:  $name:$tag failed to return a digest" 'warning'
+            continue
+        fi
+        digests["$digest"]="$(echo -en "${tag}\n${digests[$digest]:-}")"
+    done
+
+    local -i x=0
+    for digest in ${!digests[@]}; do
+        (( x++ )) && echo -n ','
+        echo -n '{'
+        echo -n '"digest":"'"$digest"'",'
+        echo -n '"tags":['
+        tags=( ${digests[$digest]} )
+        tag="${tags[0]}"
+        for i in ${!tags[@]}; do
+             [ $i -ne 0 ] || continue
+             if [ "${#tag}" -gt "${#tags[i]}" ]; then
+                 echo -n '"'"${tag}"'",'
+                 tag="${tags[i]}"
+             else
+                 echo -n '"'"${tags[i]}"'",'
+             fi
+        done
+        echo -n '"'"${tag}"'"]}'
+    done
+}
+export -f registry.digestsWithoutTimes
 
 #----------------------------------------------------------------------------------------------
 function registry.GET()
@@ -186,9 +244,10 @@ function registry.io()
     http_code:     ${http_code:-}
     " 'warn' >&2
     )
-    if [ $? -ne 0 ]; then
-        echo "command:       $(printf '%s ' "${curl_cmd[@]}")\\n    error code:    $errors" >&2
-    fi
+
+    # check that 'term.log' was successful, otherwise, make sure something is echo'd
+    [ $? -eq 0 ] || echo "command:       $(printf '%s ' "${curl_cmd[@]}")\\n    error code:    $errors" >&2
+
     return 1
 }
 export -f registry.io
@@ -234,51 +293,6 @@ function registry.propertiesFile()
     echo "${REGISTRY_PROPERTIES_FILE:=$(registry.propFile)}"
 }
 export -f registry.propertiesFile
-
-#----------------------------------------------------------------------------------------------
-function registry.push()
-{
-    local -ri isRetainedImage="${1:?}"
-    shift
-    local -ra images=( "$@" )
-    [ ${#images[*]} -eq 0 ] && return 1
-
-    local imageList=$(docker images --format '{{.Repository}}:{{.Tag}}')
-
-    local -a allImages=()
-    for image in "${images[@]}"; do
-        grep -q "$image" <<< "$imageList" || continue
-        allImages+=( "$image" )
-        [ "${isRetainedImage:-0}" -gt 0 ] || continue
-        local fp="$(docker inspect "$image" | jq -r '.[].Config.Labels."container.fingerprint"?')"
-        if [ "${fp:-}" ]; then
-            allImages+=( "${image%:*}:${fp}" )
-            docker tag "$image" "${image%:*}:${fp}"  > /dev/null 2>&1 ||: # ignore errors
-        fi
-    done
-    [ "${#allImages[*]}" -gt 0 ] || trap.die 'no valid images found'
-    mapfile -t allImages < <(printf '%s\n' "${allImages[@]}" | uniq)
-
-    local attempt
-    for image in "${allImages[@]}"; do
-        local -i wasPushed=0
-        for attempt in {0..2}; do
-            term.log "    Pushing ${image}"'\n' 'lt_blue'
-            docker push "$image" && wasPushed=1 && break
-            echo 'retrying...'
-        done
-        [ $wasPushed -eq 0 ] && trap.die "Failed to push $image"
-    done
-
-    for image in "${allImages[@]}"; do
-        local -i wasTagged=0
-        for inp in "${images[@]}"; do
-            [ "$inp" = "$image" ] && wasTagged=1 && break
-        done
-        [ "$wasTagged" -eq 1 ] || docker rmi "$image"
-    done
-}
-export -f registry.push
 
 #----------------------------------------------------------------------------------------------
 function registry.PUT()

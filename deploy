@@ -4,6 +4,7 @@
 function my.usage()
 {
     local -i exit_status=${1:-1}
+    local -r progname="$( basename "${BASH_SOURCE[0]}" )"
 
     cat >&2 << EOF
 Usage:
@@ -38,8 +39,10 @@ function my.cmdLineArgs()
     local usage='my.usage'
 
     # Parse command-line options into above variable
+    local -r longOpts='help,Help,HELP,clean,down,init,latest,promote:'
+    local -r shortOpts='Hhcdilp:'
     local -r progname="$( basename "${BASH_SOURCE[0]}" )"
-    local -r options=$(getopt --longoptions "help,Help,HELP,clean,down,init,latest,promote:" --options "Hhcdilp:" --name "$progname" -- "$@") || "$usage" $?
+    local -r options=$(getopt --longoptions "$longOpts" --options "$shortOpts" --name "$progname" -- "$@") || "$usage" $?
     eval set -- "$options"
 
     local -A opts=()

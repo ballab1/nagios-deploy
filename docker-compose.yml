@@ -12,10 +12,6 @@ services:
             TZ: America/New_York
         hostname: mysql
         image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}mysql:${MYSQL_VERSION:-5.7.23}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql:${MYSQL_VERSION:-5.7.23}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-5.7.23}:${CONTAINER_TAG:-dev}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-8.0.11}:${CONTAINER_TAG:-dev}
-#        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/mysql/${MYSQL_VERSION:-8.0.12}:${CONTAINER_TAG:-dev}
         logging:
             driver: json-file
             options:
@@ -54,7 +50,7 @@ services:
         extra_hosts:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.3}:${CONTAINER_TAG:-3c05373ca2f0e9021d39d8a4b37b2a0a90234ac3264e457bebe5743591976fdb}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.3}:${CONTAINER_TAG:-latest}
         links:
             - mysql:mysql
         logging:
@@ -96,7 +92,7 @@ services:
             SUPERVISORD_USER: ${CFG_USER:?}
             USER: www-data
         hostname: phpmyadmin
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.8.5}:${CONTAINER_TAG:-fb5d96284472a25362b58a90d632822df8b8b35c5dbd4089ec2bf2dd13f4afbf}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.8.5}:${CONTAINER_TAG:-latest}
         links:
             - mysql:mysql
         logging:

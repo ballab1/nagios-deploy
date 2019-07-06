@@ -468,7 +468,11 @@ function build.module()
                                 awk '{if(length($0)>0) {print $0}}' RS=' '| \
                                 sort -u | \
                                 awk '{if(length($0)>0) {print $0}}')
-        [ "${#branches[0]}" -eq 0 ] && return 1
+        if [ "${#branches[0]}" -eq 0 ]; then
+            term.elog "***ERROR: failure to determine current branch for $(git.repoName). Most likely on a detached HEAD"'\n' 'warn'
+            git log -8 --graph --abbrev-commit --decorate --all >&2
+            return 1
+        fi
         branch="${branches[0]}"
     fi
     export BASE_TAG="${BASE_TAG:-${branch//\//-}}"
@@ -516,6 +520,7 @@ function build.module()
         [ -f "${logBase}.out.log" ] && sudo rm "${logBase}.out.log"
         [ -f "${logBase}.err.log" ] && sudo rm "${logBase}.err.log"
         build.logInfo 'include_time' > "${logBase}.out.log"
+        # - use 'sed' to strip color codes from "${logBase}.out.log"
         (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN" 2>"${logBase}.err.log" \
           | sed -E 's|\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]||g' >>"${logBase}.out.log") \
           && status=$? || status=$?
@@ -594,7 +599,7 @@ function build.updateContainer()
             elif [ "${BUILD_PUSH:-0}" != 0 ] || [ $(docker inspect "$taggedImage" | jq -r '.[].RepoDigests?|length') -eq 0 ]; then
                 doPush=1
             fi
-            [ $doPush -eq 0 ] || registry.push 0 "$taggedImage"
+            [ $doPush -eq 0 ] || docker.pushRetained 0 "$taggedImage"
             return 9
         fi
 
@@ -607,7 +612,7 @@ function build.updateContainer()
             build.logImageInfo "$taggedImage" "$compose_yaml"
             if [ "${BUILD_PUSH:-0}" != 0 ]; then
                 build.logger "pushing ${taggedImage} to registry"
-                registry.push 0 "$taggedImage"
+                docker.pushRetained 0 "$taggedImage"
             fi
             docker rmi "$actualImage"
             return 9
@@ -627,7 +632,7 @@ function build.updateContainer()
 
     if build.canPush "$revision"; then
         build.logger "pushing ${taggedImage} to registry"
-        registry.push 0 "$taggedImage"
+        docker.pushRetained 0 "$taggedImage"
     fi
     docker rmi "$actualImage"
     return 0

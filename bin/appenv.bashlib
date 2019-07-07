@@ -18,12 +18,16 @@ function appenv.loader()
         if [ "$top" = '/usr/local/bin/libs' ] && [ -e /usr/local/crf/bin/loadLibraries.sh ]; then
             source /usr/local/crf/bin/loadLibraries.sh
             TOP="$(pwd)"
+        elif [ -e "${top}/bin/loadLibraries.sh" ]; then
+            source "${top}/bin/loadLibraries.sh"
+            TOP="$(readlink -f "${top}/..")"
+            environ.container
         elif [ -e "${top}/loadLibraries.sh" ]; then
             source "${top}/loadLibraries.sh"
             TOP="$(readlink -f "${top}/..")"
             environ.container
-        elif [ -e "${top}/libs/loadLibraries.sh" ]; then
-            source "${top}/libs/loadLibraries.sh"
+        elif [ -e "${top}/bashlibs/loadLibraries.sh" ]; then
+            source "${top}/bashlibs/loadLibraries.sh"
             TOP="$top"
             environ.container
         else

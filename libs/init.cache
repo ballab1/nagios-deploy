@@ -1,7 +1,0 @@
-#!/bin/bash
-
-export _REGISTRY_SERVER="$(registry.SERVER)"
-export _REGISTRY_URL="$(registry.URL)"
-#export _REGISTRY_USER="$(registry.USER)"
-#export _REGISTRY_CREDENTIALS="$(registry.credentials "$_REGISTRY_USER")"
-export _VERSIONS_REPO="$(versions.REPO .versions)"

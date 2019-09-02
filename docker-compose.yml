@@ -50,7 +50,7 @@ services:
         extra_hosts:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.3}:${CONTAINER_TAG:-1cc9d2a4c9f785b2ec7354315d57a15331ab2dc432edc6692ca47a6b3b41872e}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-562a1078948eb1c8acbb44031e05a12fa28b7ee835cb14d26473b3602fca9912}
         links:
             - mysql:mysql
         logging:
@@ -92,7 +92,7 @@ services:
             SUPERVISORD_USER: ${CFG_USER:?}
             USER: www-data
         hostname: phpmyadmin
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.0.1}:${CONTAINER_TAG:-182d12d6e5b706349340901aa8dff95fe0ba0a872adefca6024a96b62d37080a}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.0.1}:${CONTAINER_TAG:-8ba4b8bb6dc61096b69016124fa0907b0dcef7ed93d79eb494934e02ef1bc7d8}
         links:
             - mysql:mysql
         logging:

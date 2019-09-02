@@ -1,6 +1,3 @@
-[submodule "versions"]
-    path = versions
-    url = ../versions
-[submodule "bashlib"]
-	path = bashlib
-	url = ../bashlib
+[submodule "utilities"]
+	path = bin
+	url = ../utilities

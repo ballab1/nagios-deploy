@@ -5,35 +5,40 @@
 #   initialization for nagios
 #
 #############################################################################
-declare -r config_dir=${CONFIG_DIR:?}
-declare -r workspace_dir=${WORKSPACE_DIR:?}
 
-declare -r libs="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../libs" 
-
-
-declare NagiosConfig="${workspace_dir}/nagios/config/NagiosConfig.tgz"
-if [ ! -f "$NagiosConfig" ]; then
-    mkdir -p "${workspace_dir}/nagios/archives" ||:
-    [ -e "${config_dir}/nagios/NagiosConfig.tgz" ] && cp "${config_dir}/nagios/NagiosConfig.tgz" "$NagiosConfig" 
-fi
-
-declare dumps_dir="${workspace_dir}/mysql/loader/dumps"
-if [ ! -e "${dumps_dir}/nconf.sql" ]; then
-    mkdir -p "$dumps_dir" ||:
-    cp "${config_dir}/nagios/nconf.sql" "${dumps_dir}/nconf.sql"
-fi
-
-# update extra hosts for nagios
-declare -r yaml="${workspace_dir}/docker-compose.yml"
+declare -r config_dir="${CONFIG_DIR:?}"
+declare -r workspace_dir="${WORKSPACE_DIR:?}/nagios"
 
 
-declare -r dc_json="$(docker.yamlToJson "$yaml")"
-declare -r mysql_root_password="$(deploy.passwordSecret "$dc_json" 'mysql' 'MYSQL_ROOT_PASSWORD' )"
-declare -r nconf_dbpass="$(deploy.passwordSecret "${dc_json}" 'nagios' 'NCONF_DBPASS' )"
-declare nconf_dbuser=$(jq '.services.nagios.environment.NCONF_DBUSER' <<< "$dc_json" | tr -d '"' )
-nconf_dbuser="$(eval echo "$nconf_dbuser")"
+declare isIinitialized="$(basename "${BASH_SOURCE[0]}")"
+isIinitialized="${workspace_dir}/.${isIinitialized%.*}.init"
+if [ ! -f "$isIinitialized" ]; then
 
-cat <<-NCONF_DBUSER > "${workspace_dir}/mysql/loader/nconf_user.sh"
+    # perform initialization 
+    mkdir -p "$workspace_dir" ||: 
+    touch "$isIinitialized"
+
+    declare NagiosConfig="${workspace_dir}/config/NagiosConfig.tgz"
+    if [ ! -f "$NagiosConfig" ]; then
+        mkdir -p "${workspace_dir}/archives" ||:
+        [ -e "${config_dir}/nagios/NagiosConfig.tgz" ] && cp "${config_dir}/nagios/NagiosConfig.tgz" "$NagiosConfig" 
+    fi
+
+    declare dumps_dir="${WORKSPACE_DIR}/mysql/loader/dumps"
+    if [ ! -e "${dumps_dir}/nconf.sql" ]; then
+        mkdir -p "$dumps_dir" ||:
+        cp "${config_dir}/nagios/nconf.sql" "${dumps_dir}/nconf.sql"
+    fi
+
+    declare -r mysql_root_password="$(deploy.passwordSecret 'mysql' 'MYSQL_ROOT_PASSWORD' )"
+    declare -r nconf_dbpass="$(deploy.passwordSecret 'nagios' 'NCONF_DBPASS' )"
+
+    # determine nconf dbuser
+    declare -r dc_json="$(docker.yamlToJson "${WORKSPACE_DIR}/docker-compose.yml")"
+    declare nconf_dbuser=$(jq '.services.nagios.environment.NCONF_DBUSER' <<< "$dc_json" | tr -d '"' )
+    nconf_dbuser="$(eval echo "$nconf_dbuser")"
+
+    cat <<-NCONF_DBUSER > "${WORKSPACE_DIR}/mysql/loader/nconf_user.sh"
 #!/bin/bash
 
 cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
@@ -44,3 +49,7 @@ cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
 EOSQL
 
 NCONF_DBUSER
+
+fi
+
+# perform common

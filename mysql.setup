@@ -6,11 +6,21 @@
 #
 #############################################################################
 
-declare -r config_dir=${CONFIG_DIR:?}
-declare -r workspace_dir=${WORKSPACE_DIR:?} 
+declare -r config_dir="${CONFIG_DIR:?}"
+declare -r workspace_dir="${WORKSPACE_DIR:?}/mysql"
 
-declare loader_dir="${workspace_dir}/mysql/loader"
-[ -d "${loader_dir}/dumps" ] && exit 0
 
-mkdir -p "${loader_dir}/dumps" ||:
-cp -r "${config_dir}/mysql"/* "$loader_dir"/
+declare isIinitialized="$(basename "${BASH_SOURCE[0]}")"
+isIinitialized="${workspace_dir}/.${isIinitialized%.*}.init"
+if [ ! -f "$isIinitialized" ]; then
+
+    # perform initialization 
+    mkdir -p "$workspace_dir" ||: 
+    touch "$isIinitialized"
+
+    declare loader_dir="${workspace_dir}/loader"
+    [ -d "${loader_dir}/dumps" ] && exit 0
+
+    mkdir -p "${loader_dir}/dumps" ||:
+    cp -r "${config_dir}/"* "${loader_dir}/"
+fi

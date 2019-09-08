@@ -5,28 +5,36 @@
 #   initialization for phpmyadmin
 #
 #############################################################################
-declare -r config_dir=${CONFIG_DIR:?}
-declare -r workspace_dir=${WORKSPACE_DIR:?}
 
-declare -r libs="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../libs" 
-
-
-declare dumps_dir="${workspace_dir}/mysql/loader/dumps"
-if [ ! -e "${dumps_dir}/phpmyadmin.sql" ]; then
-    mkdir -p "$dumps_dir" ||:
-    cp "${config_dir}/phpmyadmin"/*.sql "${dumps_dir}"/
-fi 
+declare -r config_dir="${CONFIG_DIR:?}"
+declare -r workspace_dir="${WORKSPACE_DIR:?}/phpmyadmin"
 
 
-# update dbms access for zen
-declare -r yaml="${workspace_dir}/docker-compose.yml"
-declare -r dc_json="$(docker.yamlToJson "$yaml")"
-declare -r mysql_root_password="$(deploy.passwordSecret "$dc_json" 'mysql' 'MYSQL_ROOT_PASSWORD' )"
-declare -r pma_pass="$(deploy.passwordSecret "${dc_json}" 'phpmyadmin' 'PMA_PASSWORD' )"
-declare pma_user=$(jq '.services.phpmyadmin.environment.PMA_USER' <<< "$dc_json" | tr -d '"' )
-pma_user="$(eval echo "$pma_user")"
+declare isIinitialized="$(basename "${BASH_SOURCE[0]}")"
+isIinitialized="${workspace_dir}/.${isIinitialized%.*}.init"
+if [ ! -f "$isIinitialized" ]; then
 
-cat <<-PMA_USER > "${workspace_dir}/mysql/loader/phpmyadmin_user.sh"
+    # perform initialization 
+    mkdir -p "$workspace_dir" ||: 
+    touch "$isIinitialized"
+
+    declare dumps_dir="${WORKSPACE_DIR}/mysql/loader/dumps"
+    if [ ! -e "${dumps_dir}/phpmyadmin.sql" ]; then
+        mkdir -p "$dumps_dir" ||:
+        cp "${config_dir}/phpmyadmin"/*.sql "${dumps_dir}/"
+    fi 
+
+
+    # update dbms access for zen
+    declare -r mysql_root_password="$(deploy.passwordSecret 'mysql' 'MYSQL_ROOT_PASSWORD' )"
+    declare -r pma_pass="$(deploy.passwordSecret 'phpmyadmin' 'PMA_PASSWORD' )"
+
+    # update dbms access for phpmyadmin
+    declare dc_json="$(docker.yamlToJson "${WORKSPACE_DIR}/docker-compose.yml")"
+    declare pma_user=$(jq '.services.phpmyadmin.environment.PMA_USER' <<< "$dc_json" | tr -d '"' )
+    pma_user="$(eval echo "$pma_user")"
+
+    cat <<-PMA_USER > "${WORKSPACE_DIR}/mysql/loader/phpmyadmin_user.sh"
 #!/bin/bash
 
 cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
@@ -37,3 +45,7 @@ cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
 EOSQL
 
 PMA_USER
+
+fi
+
+# perform common

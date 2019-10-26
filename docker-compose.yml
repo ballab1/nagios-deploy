@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.5'
 
 services:
     mysql:
@@ -17,6 +17,8 @@ services:
             options:
                 max-file: "3"
                 max-size: "10m"
+        networks:
+            - nagios-net
         ports:
             - "3306:3306"
         restart: unless-stopped
@@ -50,7 +52,7 @@ services:
         extra_hosts:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-78434adb410dcfe6046c646e6d9a4107784e3e68dc3d20a6549f9755404ab404}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${OPTS[container_tag]:-e7bc7443426f769484c082f861e7e58a13119cea168b159fefd41efd5f163e44}
         links:
             - mysql:mysql
         logging:
@@ -58,6 +60,8 @@ services:
             options:
                 max-file: "3"
                 max-size: "10m"
+        networks:
+            - nagios-net
         ports:
             - "25:25"
             - "80:80"
@@ -92,7 +96,7 @@ services:
             SUPERVISORD_USER: ${CFG_USER:?}
             USER: www-data
         hostname: phpmyadmin
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.1}:${CONTAINER_TAG:-4363f47f1eae4f8d043fbd9720469d9ea05fa09688454b81c31d776a81bda685}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.1}:${OPTS[container_tag]:-8df7c9ed20b06cd34c17ecab45c4333e3222feb1b922a028966be2b876d65b01}
         links:
             - mysql:mysql
         logging:
@@ -100,6 +104,8 @@ services:
             options:
                 max-file: "3"
                 max-size: "10m"
+        networks:
+            - nagios-net
         ports:
             - "8002:80"
             - "9102:9000"
@@ -114,10 +120,11 @@ services:
             - ./phpmyadmin/log:/var/log
 #            - ./phpmyadmin/etc:/etc/phpmyadmin
 networks:
-   default:
+   nagios-net:
        ipam:
            config:
                - subnet: 192.168.96.0/24
+       name: nagios-container-net
 
 secrets:
    github.credentials:

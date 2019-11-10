@@ -6,7 +6,7 @@
 #
 #############################################################################
 
-declare -r config_dir="${CONFIG_DIR:?}"
+declare -r config_dir="${CONFIG_DIR:?}/phpmyadmin"
 declare -r workspace_dir="${WORKSPACE_DIR:?}/phpmyadmin"
 
 
@@ -21,16 +21,14 @@ if [ ! -f "$isIinitialized" ]; then
     declare dumps_dir="${WORKSPACE_DIR}/mysql/loader/dumps"
     if [ ! -e "${dumps_dir}/phpmyadmin.sql" ]; then
         mkdir -p "$dumps_dir" ||:
-        cp "${config_dir}/phpmyadmin"/*.sql "${dumps_dir}/"
+        cp "${config_dir}"/*.sql "${dumps_dir}/"
     fi 
 
 
-    # update dbms access for zen
+    # update dbms access for phpmyadmin
     declare -r mysql_root_password="$(deploy.passwordSecret 'mysql' 'MYSQL_ROOT_PASSWORD' )"
     declare -r pma_pass="$(deploy.passwordSecret 'phpmyadmin' 'PMA_PASSWORD' )"
-
-    # update dbms access for phpmyadmin
-    declare dc_json="$(docker.yamlToJson "${WORKSPACE_DIR}/docker-compose.yml")"
+    declare dc_json="$(lib.yamlToJson "${WORKSPACE_DIR}/docker-compose.yml")"
     declare pma_user=$(jq '.services.phpmyadmin.environment.PMA_USER' <<< "$dc_json" | tr -d '"' )
     pma_user="$(eval echo "$pma_user")"
 

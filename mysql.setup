@@ -6,7 +6,7 @@
 #
 #############################################################################
 
-declare -r config_dir="${CONFIG_DIR:?}"
+declare -r config_dir="${CONFIG_DIR:?}/mysql"
 declare -r workspace_dir="${WORKSPACE_DIR:?}/mysql"
 
 

@@ -1,0 +1,37 @@
+@Library('jenkins-sharedlibs')_
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+pipeline {
+  agent any
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '20'))
+    disableConcurrentBuilds()
+    disableResume()
+    timestamps()
+  }
+  parameters {
+    string(name: 'CONTAINER_TAG', defaultValue: 'latest', description: 'version of nagios containers to use')
+    string(name: 'SLAVE', defaultValue: 'localhost', description: 'label of slave on which nagios should run')
+    string(name: 'TARGET_DIR', defaultValue: '/home/cyc/nagios-deploy', description: 'target directory for config files')
+  }
+
+  stages {
+    stage ('ubuntu-s4') {
+      agent { label 'ubuntu-s4' }
+      steps {
+        ansiColor('xterm') {
+	  updateWorkspace(params.TARGET_DIR, ['./deploy', '-l', '-c', params.CONTAINER_TAG])
+        }
+      }
+    }
+  }
+  post {
+    always {
+        kafkaBuildReporter()
+    }
+    cleanup {
+        deleteDir()
+    }
+  }
+} 

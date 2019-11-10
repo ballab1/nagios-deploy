@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.5'
 
 services:
     mysql:
@@ -17,6 +17,8 @@ services:
             options:
                 max-file: "3"
                 max-size: "10m"
+        networks:
+            - nagios-net 
         ports:
             - "3306:3306"
         restart: unless-stopped
@@ -50,7 +52,7 @@ services:
         extra_hosts:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-85cb3b0a179f818f31074694678bc81f46655d2fa3bf3d145a9fd1a0109d0762}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-v3.9.1}
         links:
             - mysql:mysql
         logging:
@@ -58,6 +60,8 @@ services:
             options:
                 max-file: "3"
                 max-size: "10m"
+        networks:
+            - nagios-net 
         ports:
             - "25:25"
             - "80:80"
@@ -92,7 +96,7 @@ services:
             SUPERVISORD_USER: ${CFG_USER:?}
             USER: www-data
         hostname: phpmyadmin
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.0.1}:${CONTAINER_TAG:-55c4dc18d154d412fc36cccac6572d1917fb80adf8f0b75845ab1bc45fa6af48}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.1}:${CONTAINER_TAG:-v3.9.1}
         links:
             - mysql:mysql
         logging:
@@ -100,6 +104,8 @@ services:
             options:
                 max-file: "3"
                 max-size: "10m"
+        networks:
+            - nagios-net 
         ports:
             - "8002:80"
             - "9102:9000"
@@ -114,10 +120,11 @@ services:
             - ./phpmyadmin/log:/var/log
 #            - ./phpmyadmin/etc:/etc/phpmyadmin
 networks:
-   default:
+   nagios-net:
        ipam:
            config:
                - subnet: 192.168.96.0/24
+       name: nagios-container-net
 
 secrets:
    github.credentials:

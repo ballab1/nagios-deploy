@@ -1,0 +1,23 @@
+completion_msg:
+    - "If this setup includes a web server, please open the following URL in your browser: http://$HOST_IP"
+
+container_os: alpine
+
+environment:
+    KAFKA_BOOTSTRAP_SERVERS: '10.1.3.6:9092,10.1.3.11:9092,10.1.3.10:9092'
+
+skip_wait:
+    - blue
+    - grafana
+    - jbe
+    - jfk
+    - jira
+    - mysql
+    - pgadmin4
+    - supervisorm
+    - registry
+
+versions:
+    repo: https://github.com/ballab1/versions
+    dir: ${WORKSPACE_DIR}/versions
+    commit: add96f5e97ddc1e6546a42273565460b0616fd3b

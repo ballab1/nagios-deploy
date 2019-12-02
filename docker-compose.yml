@@ -52,7 +52,7 @@ services:
         extra_hosts:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-39db823e15f7045591d6875d7c86e85a901876356b448a224d5b8970c0bc7b62}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-50643c91ba4286c15bdf34a1f7d3921c944c7813c94807e9251c91ab8cfbe0f6}
         links:
             - mysql:mysql
         logging:
@@ -64,7 +64,7 @@ services:
             - nagios-net 
         ports:
             - "25:25"
-            - "80:80"
+            - "8001:80"
             - "9001:9001"
         restart: unless-stopped
         secrets:
@@ -77,6 +77,53 @@ services:
             - ./nagios/config:/usr/local/nagios/share/nconf/output
             - ./nagios/log:/var/log
             - ./nagios/rrd:/usr/local/nagios/var/rrd
+
+    nginx:
+        container_name: nginx
+        depends_on:
+            - nagios
+            - phpmyadmin
+        environment:
+#            NGINX_DEBUG: 1
+            DEBUG_TRACE: ${DEBUG_TRACE:-0}
+#            PWD_PROTECTED: 'true'
+            SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd
+            SUPERVISORD_USER: ${CFG_USER:?}
+            WEB_USER_ID: ${CFG_USER:?}
+            WEB_USER_PASS_FILE: /run/secrets/web_user.pwd
+        extra_hosts:
+            - "ubuntu-s1:10.1.3.11"
+            - "ubuntu-s2:10.1.3.12"
+            - "ubuntu-s3:10.1.3.6"
+            - "ubuntu-s4:10.1.3.10"
+            - "ubuntu-s5:10.1.3.14"
+            - "ubuntu-s6:10.1.3.15"
+            - "ubuntu-s7:10.1.3.16"
+            - "ubuntu-s8:10.1.3.17"
+        hostname: nginx
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.16.1}:${CONTAINER_TAG:-cfe0f5ab1bfa6266bc87d8ff68b37f0e87abf4f5ccd16dce2543b33730293185}
+        logging:
+            driver: json-file
+            options:
+                max-file: "3"
+                max-size: "10m"
+        networks:
+            - nagios-net 
+        ports:
+            - "80:80"
+            - "443:443"
+            - "9005:9001"
+        restart: unless-stopped
+        secrets:
+            - supervisord.pwd
+            - web_user.pwd
+            - server.crt
+            - server.key
+            - dhparam.pem
+        volumes:
+            - ./nginx/log:/var/log
+            - ./www:/var/www
+            - ./nginx/conf.d:/etc/nginx/proxy.conf
 
     phpmyadmin:
         container_name: phpmyadmin
@@ -96,7 +143,7 @@ services:
             SUPERVISORD_USER: ${CFG_USER:?}
             USER: www-data
         hostname: phpmyadmin
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.1}:${CONTAINER_TAG:-3f6646ef6f759b3adaa8408d853b55640d31557c884479b737b9c29c87f2fb12}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.2}:${CONTAINER_TAG:-2c06e4dff7833eb284c382453a4d281ab115a6211b95f94c310f66b831c6788c}
         links:
             - mysql:mysql
         logging:
@@ -129,12 +176,6 @@ networks:
 secrets:
    github.credentials:
      file: .secrets/secrets/credentials.github
-   grafana_admin.pwd:
-     file: .secrets/secrets/grafana_admin.pwd
-   kafka.secret:
-     file: .secrets/secrets/kafkamgr.secret
-   kafka_manager.pwd:
-     file: .secrets/secrets/bobb.pwd
    mysql.pwd:
      file: .secrets/secrets/bobb.pwd
    mysql_root.pwd:
@@ -145,17 +186,11 @@ secrets:
      file: .secrets/secrets/bobb.pwd
 #   github.token:
 #     file: .secrets/secrets/hubot_token.github
-   slack.token:
-     file: .secrets/secrets/hubot_token.slack
    supervisord.pwd:      
      file: .secrets/secrets/bobb.pwd
    web_user.pwd:
      file: .secrets/secrets/bobb.pwd
-   webdav.pwd:
-     file: .secrets/secrets/bobb.pwd
-   zenphoto.pwd:
-     file: .secrets/secrets/bobb.pwd
-   certificate.crt:
+   server.crt:
      file: .secrets/ssl/server.crt
    server.key:
      file: .secrets/ssl/server.key

@@ -28,6 +28,8 @@ if [ ! -f "$isIinitialized" ]; then
     # update dbms access for phpmyadmin
     declare -r mysql_root_password="$(deploy.passwordSecret 'mysql' 'MYSQL_ROOT_PASSWORD' )"
     declare -r pma_pass="$(deploy.passwordSecret 'phpmyadmin' 'PMA_PASSWORD' )"
+
+    # update dbms access for phpmyadmin
     declare dc_json="$(lib.yamlToJson "${WORKSPACE_DIR}/docker-compose.yml")"
     declare pma_user=$(jq '.services.phpmyadmin.environment.PMA_USER' <<< "$dc_json" | tr -d '"' )
     pma_user="$(eval echo "$pma_user")"
@@ -47,3 +49,7 @@ PMA_USER
 fi
 
 # perform common
+if [ -d "${config_dir}/nginx.conf" ]; then
+    sudo mkdir -p "${WORKSPACE_DIR}/nginx/conf.d/"
+    sudo cp -r "${config_dir}/nginx.conf"/* "${WORKSPACE_DIR}/nginx/conf.d/"
+fi

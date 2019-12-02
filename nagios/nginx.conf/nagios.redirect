@@ -1,0 +1,45 @@
+location /nagios/nconf/ {
+    return   404;
+}
+
+location /nagios/ {
+    proxy_pass http://nagios/;
+    proxy_set_header   Host             $host:$server_port;
+    proxy_set_header   X-Real-IP        $remote_addr;
+    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+}
+
+location /nagiosgraph/ {
+    proxy_pass http://nagios/;
+    proxy_set_header   Host             $host:$server_port;
+    proxy_set_header   X-Real-IP        $remote_addr;
+    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+}
+
+#location ~ /nagios/(.*)\.cgi(.*)$ {
+#    proxy_pass http://nagios/;
+#    proxy_set_header   Host             $host:$server_port;
+#    proxy_set_header   X-Real-IP        $remote_addr;
+#    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+#}
+#
+#location ~ /nagios/(.*)\.php(.*)$ {
+#    proxy_pass http://nagios/;
+#    proxy_set_header   Host             $host:$server_port;
+#    proxy_set_header   X-Real-IP        $remote_addr;
+#    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+#} 
+
+#location ~ /nagiosgraph/(.*)\.cgi(.*)$ {
+#    proxy_pass http://nagios/;
+#    proxy_set_header   Host             $host:$server_port;
+#    proxy_set_header   X-Real-IP        $remote_addr;
+#    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+#}
+#
+#location ~ /nagiosgraph/(.*)\.php(.*)$ {
+#    proxy_pass http://nagios/;
+#    proxy_set_header   Host             $host:$server_port;
+#    proxy_set_header   X-Real-IP        $remote_addr;
+#    proxy_set_header   X-Forwarded-For  $proxy_add_x_forwarded_for;
+#} 

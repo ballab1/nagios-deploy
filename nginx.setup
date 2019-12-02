@@ -1,0 +1,85 @@
+#!/bin/bash
+
+#############################################################################
+#
+#   initialization for nginx
+#
+#############################################################################
+
+declare -r config_dir="${CONFIG_DIR:?}/nginx"
+declare -r workspace_dir="${WORKSPACE_DIR:?}/nginx"
+declare -r www_dir="${WORKSPACE_DIR:?}/www"
+declare -r secrets_dir="${SECRETS_DIR:?}"
+
+
+declare isIinitialized="$(basename "${BASH_SOURCE[0]}")"
+isIinitialized="${workspace_dir}/.${isIinitialized%.*}.init"
+if [ ! -f "$isIinitialized" ]; then
+
+    # perform initialization 
+    mkdir -p "$workspace_dir" ||: 
+    touch "$isIinitialized"
+
+    if [ ! -e "${www_dir}/index.html" ]; then
+        mkdir -p "$www_dir" ||:
+    fi
+
+    mkdir -p "$secrets_dir" ||:
+
+    declare -r dc_json="$(lib.yamlToJson "${WORKSPACE_DIR}/docker-compose.yml")"
+    declare -A CERTS=()
+    for key in 'dhparam.pem' 'server.key' 'server.crt' 'server.csr'; do
+        CERTS["$key"]=${WORKSPACE_DIR}/$(jq --compact-output --monochrome-output --raw-output 'try .secrets."'$key'".file' <<< "$dc_json")
+        [[ "${CERTS[$key]:-}" && "${CERTS['$key']}" != 'null' ]] && continue
+        CERTS["$key"]="${secrets_dir}/$key"
+    done
+
+
+    # ensure we have self signed certs (incase they are not include in secrets dir
+    if [ ! -e "${CERTS['dhparam.pem']}" ] || [ ! -e "${CERTS['server.key']}" ] || [ ! -e "${CERTS['server.crt']}" ]; then
+        term.log '>> GENERATING SSL CERT\n' 'lt_magenta'
+
+        declare tmp=$(mktemp -d)
+        openssl genrsa \
+                -des3 \
+                -passout pass:wxyz \
+                -out "${tmp}/server.pass.key" 2048
+        openssl rsa \
+                -passin pass:wxyz \
+                -in "${tmp}/server.pass.key" \
+                -out "${CERTS['server.key']}"
+        rm -rf "$tmp"
+
+        openssl dhparam -out "${CERTS['dhparam.pem']}" 2048
+        openssl req \
+                -new \
+                -key "${CERTS['server.key']}" \
+                -subj "/C=US/ST=Massachusetts/L=Mansfield/O=SOHO_BALL/OU=home/OU=docker.nginx.io/CN=$(hostname -s)" \
+                -out "${CERTS['server.csr']}"
+        openssl x509
+                -req \
+                -sha256 \
+                -days 300065 \
+                -in "${CERTS['server.csr']}" \
+                -signkey "${CERTS['server.key']}" \
+                -out "${CERTS['server.crt']}"
+
+        term.log '>> GENERATING SSL CERT ... DONE\n' 'lt_magenta'
+    fi
+fi
+
+
+# perform common
+if [ -d "${config_dir}/nginx.conf" ]; then
+    sudo mkdir -p "${WORKSPACE_DIR}/nginx/conf.d/"
+    sudo cp -r "${config_dir}/nginx.conf"/* "${WORKSPACE_DIR}/nginx/conf.d/"
+fi
+
+
+if [ -d "$www_dir" ]; then
+    cp -r "${config_dir}/"* "${www_dir}/"
+    [ -d "${www_dir}/nginx.conf" ] && sudo rm -rf "${www_dir}/nginx.conf"
+
+    declare -a whitelist=( '10.1.3.1' '10.1.3.2' '10.1.3.5' '192.168.100.1' )
+    deploy.replaceIpAddresses "${www_dir}/index.html" "$(environ.ipAddress)" "${whitelist[@]}"
+fi

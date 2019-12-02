@@ -1,0 +1,3 @@
+upstream phpmyadmin {
+    server phpmyadmin:80;
+} 

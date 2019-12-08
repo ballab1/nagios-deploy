@@ -70,7 +70,7 @@ fi
 
 
 # perform common
-if [ -d "${config_dir}/nginx.conf" ]; then
+if deploy.isValidService 'nginx' && [ -d "${config_dir}/nginx.conf" ]; then
     sudo mkdir -p "${WORKSPACE_DIR}/nginx/conf.d/"
     sudo cp -r "${config_dir}/nginx.conf"/* "${WORKSPACE_DIR}/nginx/conf.d/"
 fi

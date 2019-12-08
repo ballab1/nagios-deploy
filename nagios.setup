@@ -8,6 +8,7 @@
 
 declare -r config_dir="${CONFIG_DIR:?}/nagios"
 declare -r workspace_dir="${WORKSPACE_DIR:?}/nagios"
+declare -r NagiosConfig="${workspace_dir}/config/NagiosConfig.tgz"
 
 
 declare isIinitialized="$(basename "${BASH_SOURCE[0]}")"
@@ -18,7 +19,6 @@ if [ ! -f "$isIinitialized" ]; then
     mkdir -p "$workspace_dir" ||: 
     touch "$isIinitialized"
 
-    declare NagiosConfig="${workspace_dir}/config/NagiosConfig.tgz"
     if [ ! -f "$NagiosConfig" ]; then
         mkdir -p "${workspace_dir}/archives" ||:
         [ -e "${config_dir}/NagiosConfig.tgz" ] && cp "${config_dir}/NagiosConfig.tgz" "$NagiosConfig" 
@@ -52,7 +52,12 @@ NCONF_DBUSER
 fi
 
 # perform common
-if [ -d "${config_dir}/nginx.conf" ]; then
+if deploy.isValidService 'nginx' && [ -d "${config_dir}/nginx.conf" ]; then
     sudo mkdir -p "${WORKSPACE_DIR}/nginx/conf.d/"
     sudo cp -r "${config_dir}/nginx.conf"/* "${WORKSPACE_DIR}/nginx/conf.d/"
+fi
+
+if [ "${config_dir}/NagiosConfig.tgz" -nt "$NagiosConfig" ]; then
+    echo "    Updating $NagiosConfig" >&2
+    cp "${config_dir}/NagiosConfig.tgz" "$NagiosConfig" 
 fi

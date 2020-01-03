@@ -16,11 +16,13 @@ if [ ! -f "$isIinitialized" ]; then
 
     # perform initialization 
     mkdir -p "$workspace_dir" ||: 
-    touch "$isIinitialized"
 
     declare loader_dir="${workspace_dir}/loader"
     [ -d "${loader_dir}/dumps" ] && exit 0
 
     mkdir -p "${loader_dir}/dumps" ||:
     cp -r "${config_dir}/"* "${loader_dir}/"
+
+
+    touch "$isIinitialized"
 fi

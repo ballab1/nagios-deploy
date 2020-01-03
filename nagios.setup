@@ -8,7 +8,7 @@
 
 declare -r config_dir="${CONFIG_DIR:?}/nagios"
 declare -r workspace_dir="${WORKSPACE_DIR:?}/nagios"
-declare -r NagiosConfig="${workspace_dir}/config/NagiosConfig.tgz"
+declare NagiosConfig="${workspace_dir}/config/NagiosConfig.tgz"
 
 
 declare isIinitialized="$(basename "${BASH_SOURCE[0]}")"
@@ -17,7 +17,6 @@ if [ ! -f "$isIinitialized" ]; then
 
     # perform initialization 
     mkdir -p "$workspace_dir" ||: 
-    touch "$isIinitialized"
 
     if [ ! -f "$NagiosConfig" ]; then
         mkdir -p "${workspace_dir}/archives" ||:
@@ -35,7 +34,8 @@ if [ ! -f "$isIinitialized" ]; then
 
     # determine nconf dbuser
     declare -r dc_json="$(lib.yamlToJson "${WORKSPACE_DIR}/docker-compose.yml")"
-    declare nconf_dbuser="$(eval echo $(jq --compact-output --monochrome-output --raw-output '.services.nagios.environment.NCONF_DBUSER' <<< "$dc_json"))"
+    declare nconf_dbuser=$(jq --compact-output --monochrome-output --raw-output '.services.nagios.environment.NCONF_DBUSER' <<< "$dc_json")
+    nconf_dbuser="$(eval echo "$nconf_dbuser")"
 
     cat <<-NCONF_DBUSER > "${WORKSPACE_DIR}/mysql/loader/nconf_user.sh"
 #!/bin/bash
@@ -49,12 +49,13 @@ EOSQL
 
 NCONF_DBUSER
 
+    touch "$isIinitialized"
 fi
 
 # perform common
 if deploy.isValidService 'nginx' && [ -d "${config_dir}/nginx.conf" ]; then
     sudo mkdir -p "${WORKSPACE_DIR}/nginx/conf.d/"
-    sudo cp -r "${config_dir}/nginx.conf"/* "${WORKSPACE_DIR}/nginx/conf.d/"
+    sudo cp -ru "${config_dir}/nginx.conf"/* "${WORKSPACE_DIR}/nginx/conf.d/"
 fi
 
 if [ "${config_dir}/NagiosConfig.tgz" -nt "$NagiosConfig" ]; then

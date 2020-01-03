@@ -52,7 +52,7 @@ services:
         extra_hosts:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios
-        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-bc9db30412cdc4e0c6b84f521edc8e02f1e52963adb91e98cb90ac003f4dbe67}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-b0ac8613d9cbe611ddf9a9c3eb43a72884d0c95baea7666f34f3ecb77bafc11d}
         links:
             - mysql:mysql
         logging:

@@ -60,5 +60,6 @@ fi
 
 if [ "${config_dir}/NagiosConfig.tgz" -nt "$NagiosConfig" ]; then
     echo "    Updating $NagiosConfig" >&2
-    cp "${config_dir}/NagiosConfig.tgz" "$NagiosConfig" 
+    sudo cp "${config_dir}/NagiosConfig.tgz" "$NagiosConfig" 
+    [ -d "${workspace_dir}/nginx.conf" ] && sudo rm -rf "${workspace_dir}/nginx.conf"
 fi

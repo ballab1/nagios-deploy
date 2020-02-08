@@ -38,6 +38,8 @@ services:
 
     nagios:
         container_name: nagios
+        depends_on:
+            - mysql
         dns: 10.1.3.1
         dns_search:
             - ubuntu.home
@@ -61,8 +63,6 @@ services:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios.s4.home
         image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-b0ac8613d9cbe611ddf9a9c3eb43a72884d0c95baea7666f34f3ecb77bafc11d}
-        links:
-            - mysql:mysql
         logging:
             driver: json-file
             options:

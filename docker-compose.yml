@@ -46,23 +46,26 @@ services:
             - home
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
+#            NGINX_DEBUG: 1
 #            NAGIOS_GITHUB_CREDENTIALS_FILE: /run/secrets/github.credentials
 #            NAGIOS_GITHUB_EMAIL: ${CFG_EMAIL:?}
 #            NAGIOS_GITHUB_NAME: ${CFG_NAME:?}
             NAGIOS_PASS_FILE: /run/secrets/nagios.pwd
 #            NAGIOS_REPO: github.com/ballab1/DBMS-backup
             NAGIOS_USER: ${CFG_USER:?}
-            NAGIOS_URL_HTML_PATH: /nagios
             NCONF_DBHOST: mysql
             NCONF_DBNAME: nconf
             NCONF_DBPASS_FILE: /run/secrets/mysql.pwd
             NCONF_DBUSER: ${CFG_USER:?}
+#            NCONF_DEBUG_MODE: 1              # [0|1] 
+#            NCONF_DEBUG_GENERATE: 5          # [1=ERROR|2=WARN|3=INFO|4=DEBUG|5=TRACE] 
+#            PNP4NAGIOS_LOGLEVEL: 4
             SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd         
             SUPERVISORD_USER: ${CFG_USER:?}
         extra_hosts:
             - \"docker-host:${HOST_IP:?}\"
         hostname: nagios.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-b0ac8613d9cbe611ddf9a9c3eb43a72884d0c95baea7666f34f3ecb77bafc11d}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NCORE_VERSION:-4.4.5}:${CONTAINER_TAG:-88cf46abeeaa8d7161e0e5e9a7fb17fcd444fa28e601bb268912e02944b4e99e}
         logging:
             driver: json-file
             options:
@@ -81,10 +84,10 @@ services:
             - nagios.pwd
             - supervisord.pwd
         volumes:
-            - ./nagios/archives:/usr/local/nagios/var/archives
-            - ./nagios/config:/usr/local/nagios/share/nconf/output
+            - ./nagios/archives:/var/nagios/archives
+            - ./nagios/config:/var/www/nconf/output
+#            - ./nagios/rrd:/usr/local/pnp4nagios/var/perfdata
             - ./nagios/log:/var/log
-            - ./nagios/rrd:/usr/local/nagios/var/rrd
 
     nginx:
         container_name: nginx
@@ -96,24 +99,15 @@ services:
             - ubuntu.home
             - home
         environment:
-#            NGINX_DEBUG: 1
+            NGINX_DEBUG: 1
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
 #            PWD_PROTECTED: 'true'
             SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd
             SUPERVISORD_USER: ${CFG_USER:?}
             WEB_USER_ID: ${CFG_USER:?}
             WEB_USER_PASS_FILE: /run/secrets/web_user.pwd
-        extra_hosts:
-            - "ubuntu-s1:10.1.3.11"
-            - "ubuntu-s2:10.1.3.12"
-            - "ubuntu-s3:10.1.3.6"
-            - "ubuntu-s4:10.1.3.10"
-            - "ubuntu-s5:10.1.3.14"
-            - "ubuntu-s6:10.1.3.15"
-            - "ubuntu-s7:10.1.3.16"
-            - "ubuntu-s8:10.1.3.17"
         hostname: nginx.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.16.1}:${CONTAINER_TAG:-cfe0f5ab1bfa6266bc87d8ff68b37f0e87abf4f5ccd16dce2543b33730293185}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.16.1}:${CONTAINER_TAG:-f94353b78ef095755b63cde2c81ac5da2402286244e40c86d9874eaf45d9c130}
         logging:
             driver: json-file
             options:
@@ -159,7 +153,7 @@ services:
             SUPERVISORD_USER: ${CFG_USER:?}
             USER: www-data
         hostname: phpmyadmin.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-4.9.2}:${CONTAINER_TAG:-2c06e4dff7833eb284c382453a4d281ab115a6211b95f94c310f66b831c6788c}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.0.1}:${CONTAINER_TAG:-8b59bb0cdeb18ac4e8c2e51512017b057b15b053c9fee84a600a6b6525cac164}
         links:
             - mysql:mysql
         logging:
@@ -182,12 +176,15 @@ services:
         volumes:
             - ./phpmyadmin/log:/var/log
 #            - ./phpmyadmin/etc:/etc/phpmyadmin
+
+
 networks:
    nagios-net:
        ipam:
            config:
                - subnet: 192.168.96.0/24
        name: nagios-container-net
+
 
 secrets:
    github.credentials:

@@ -10,7 +10,10 @@ environment:
 #skip_wait:
 #   - grafana
 
+thirdparty_versions:
+    MYSQL_VERSION: 5.7.23               # https://hub.docker.com/_/mysql 
+
 versions:
     repo: https://github.com/ballab1/versions
     dir: ${WORKSPACE_DIR}/.versions
-    commit: 589bd45dce67db2e0d62cca31e9ec12acb4093bf
+    commit: 80a5e6f83615bfda113edc9db37013391feffe85

@@ -5,12 +5,17 @@ container_os: alpine
 
 environment:
     __SECRETS_FILE: /home/bobb/.inf/secret.properties
-    KAFKA_BOOTSTRAP_SERVERS: 's3.ubuntu.home:9092,s4.ubuntu.home:9092'
+    KAFKA_BOOTSTRAP_SERVERS: s3.ubuntu.home:9092,s4.ubuntu.home:9092,s8.ubuntu.home:9092
 
 #skip_wait:
 #   - grafana
 
+thirdparty_versions:
+    MYSQL_VERSION: 5.7.23               # https://hub.docker.com/_/mysql 
+
 versions:
     repo: https://github.com/ballab1/versions
     dir: ${WORKSPACE_DIR}/.versions
-    commit: 589bd45dce67db2e0d62cca31e9ec12acb4093bf
+    commit: ebb7f9a437686808b17062f51dea300342c151b3
+    branch: dev
+

@@ -4,7 +4,7 @@ services:
     mysql:
 #        command: --default-authentication-plugin=mysql_native_password
         container_name: mysql
-        dns: 10.1.3.1
+        dns: 10.3.1.1
         dns_search:
             - ubuntu.home
             - home
@@ -40,13 +40,15 @@ services:
         container_name: nagios
         depends_on:
             - mysql
-        dns: 10.1.3.1
+        dns: 10.3.1.1
         dns_search:
             - ubuntu.home
             - home
         environment:
             NAGIOS_PASS_FILE: /run/secrets/nagios.pwd
             NAGIOS_USER: ${CFG_USER:?}
+            NGINX_LOG_ACCESS: 'syslog:server=10.3.1.15:514,tag=nginx_access json'
+            NGINX_LOG_ERRORS: 'syslog:server=10.3.1.15:514,tag=nginx_error notice'
             NCONF_DBHOST: mysql
             NCONF_DBNAME: nconf
             NCONF_DBPASS_FILE: /run/secrets/mysql.pwd
@@ -66,7 +68,7 @@ services:
         extra_hosts:
             - "docker-host:${HOST_IP:?}"
         hostname: nagios.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-8274ef6365d86a795a304adf764284af0ea60092e6e1037e07695d73490811c1}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-9c6389cf8dd3645379a2abed2dafce381c6bc87ea99745b32d7f14cf58f0595a}
         logging:
             driver: json-file
             options:
@@ -95,7 +97,7 @@ services:
         depends_on:
             - nagios
             - phpmyadmin
-        dns: 10.1.3.1
+        dns: 10.3.1.1
         dns_search:
             - ubuntu.home
             - home
@@ -103,12 +105,14 @@ services:
 #            DEBUG_TRACE: ${DEBUG_TRACE:-0}
             SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd
             SUPERVISORD_USER: ${CFG_USER:?}
+            NGINX_LOG_ACCESS: 'syslog:server=10.3.1.15:514,tag=nginx_access json'
+            NGINX_LOG_ERRORS: 'syslog:server=10.3.1.15:514,tag=nginx_error notice'
             WEB_USER_ID: ${CFG_USER:?}
             WEB_USER_PASS_FILE: /run/secrets/web_user.pwd
 #            NGINX_DEBUG: 1
 #            PWD_PROTECTED: 'true'
         hostname: nginx.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.18.0}:${CONTAINER_TAG:-2b2d3780afd05b389b5098b4720c6994a05554d9ca750bf5590261eab0d2e310}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.18.0}:${CONTAINER_TAG:-840e960388da34b8eba79b024190c2099d7d206cc3df3b288e02d5ceb1870df6}
         logging:
             driver: json-file
             options:
@@ -134,7 +138,7 @@ services:
 
     phpmyadmin:
         container_name: phpmyadmin
-        dns: 10.1.3.1
+        dns: 10.3.1.1
         dns_search:
             - ubuntu.home
             - home
@@ -149,13 +153,15 @@ services:
             PMA_PASSWORD_FILE: /run/secrets/pma.pwd
             PMA_PORT: 3306
             PMA_USER: ${CFG_USER:?}
+            NGINX_LOG_ACCESS: 'syslog:server=10.3.1.15:514,tag=nginx_access logstash'
+            NGINX_LOG_ERRORS: 'syslog:server=10.3.1.15:514,tag=nginx_error notice'
             SUPERVISORD_PASS_FILE: /run/secrets/supervisord.pwd
             SUPERVISORD_USER: ${CFG_USER:?}
             USER: www-data
 #            NGINX_DEBUG: 1
 #            PMA_VERBOSE: 1
         hostname: phpmyadmin.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.0.2}:${CONTAINER_TAG:-538b4042fabb8283b72cbb4154de97a487cdcbd22f75ce5e558f0e4b22a940ad}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.0.4}:${CONTAINER_TAG:-d2c827bbb717820f0396b209dbf85582446233c735318c510d849739a4e1bcb2}
         links:
             - mysql:mysql
         logging:

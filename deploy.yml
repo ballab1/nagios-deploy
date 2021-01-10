@@ -19,3 +19,7 @@ versions:
     commit: ebb7f9a437686808b17062f51dea300342c151b3
     branch: dev
 
+default_args:
+    cmd: 'deploy.restart'
+    latest: 'HEAD'
+    container_tag: 'dev'

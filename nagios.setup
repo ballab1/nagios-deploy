@@ -6,6 +6,9 @@
 #
 #############################################################################
 
+[ "${CONFIG_DIR:-}" ] || CONFIG_DIR="$(pwd)"
+[ "${WORKSPACE_DIR:-}" ] || WORKSPACE_DIR="$(pwd)/workspace.$(basename "$CONFIG_DIR")"
+
 declare -r config_dir="${CONFIG_DIR:?}/nagios"
 declare -r workspace_dir="${WORKSPACE_DIR:?}/nagios"
 declare NagiosConfig="${workspace_dir}/config/NagiosConfig.tgz"
@@ -63,3 +66,4 @@ if [ "${config_dir}/NagiosConfig.tgz" -nt "$NagiosConfig" ]; then
     sudo cp "${config_dir}/NagiosConfig.tgz" "$NagiosConfig" 
     [ -d "${workspace_dir}/nginx.conf" ] && sudo rm -rf "${workspace_dir}/nginx.conf"
 fi
+exit 0

@@ -6,6 +6,9 @@
 #
 #############################################################################
 
+[ "${CONFIG_DIR:-}" ] || CONFIG_DIR="$(pwd)"
+[ "${WORKSPACE_DIR:-}" ] || WORKSPACE_DIR="$(pwd)/workspace.$(basename "$CONFIG_DIR")"
+
 declare -r config_dir="${CONFIG_DIR:?}/mysql"
 declare -r workspace_dir="${WORKSPACE_DIR:?}/mysql"
 
@@ -18,11 +21,11 @@ if [ ! -f "$isIinitialized" ]; then
     mkdir -p "$workspace_dir" ||: 
 
     declare loader_dir="${workspace_dir}/loader"
-    [ -d "${loader_dir}/dumps" ] && exit 0
+    [ -d "${loader_dir}/dumps" ] ||  mkdir -p "${loader_dir}/dumps" ||:
 
-    mkdir -p "${loader_dir}/dumps" ||:
     cp -r "${config_dir}/"* "${loader_dir}/"
 
 
     touch "$isIinitialized"
 fi
+exit 0

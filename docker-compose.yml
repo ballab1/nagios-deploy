@@ -161,7 +161,7 @@ services:
 #            NGINX_DEBUG: 1
 #            PMA_VERBOSE: 1
         hostname: phpmyadmin.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.0.4}:${CONTAINER_TAG:-d2c827bbb717820f0396b209dbf85582446233c735318c510d849739a4e1bcb2}
+        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.1.0}:${CONTAINER_TAG:-d2c827bbb717820f0396b209dbf85582446233c735318c510d849739a4e1bcb2}
         links:
             - mysql:mysql
         logging:

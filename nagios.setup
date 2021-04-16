@@ -40,7 +40,8 @@ if [ ! -f "$isIinitialized" ]; then
     declare nconf_dbuser=$(jq --compact-output --monochrome-output --raw-output '.services.nagios.environment.NCONF_DBUSER' <<< "$dc_json")
     nconf_dbuser="$(eval echo "$nconf_dbuser")"
 
-    cat <<-NCONF_DBUSER > "${WORKSPACE_DIR}/mysql/loader/nconf_user.sh"
+    if [ "${nconf_dbuser:-}" ] && [ "${nconf_dbpass:-}" ]; then
+        cat <<-NCONF_DBUSER > "${WORKSPACE_DIR}/mysql/loader/nconf_user.sh"
 #!/bin/bash
 
 cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
@@ -51,7 +52,10 @@ cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
 EOSQL
 
 NCONF_DBUSER
-
+    else
+        [ "${nconf_dbuser:-}" ] || echo 'nconf_dbuser not defined: connection to MYSQL not created'
+        [ "${nconf_dbpass:-}" ] || echo 'nconf_dbpass not defined: connection to MYSQL not created'
+    fi
     touch "$isIinitialized"
 fi
 

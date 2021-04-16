@@ -1,5 +1,5 @@
 completion_msg:
-    - "If this setup includes a web server, please open the following URL in your browser: http://$HOST_IP"
+    - "If this setup includes a web server, please open the following URL in your browser: http://$(hostname -f)"
 
 container_os: alpine
 

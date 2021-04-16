@@ -36,7 +36,8 @@ if [ ! -f "$isIinitialized" ]; then
     declare pma_user=$(jq --compact-output --monochrome-output --raw-output '.services.phpmyadmin.environment.PMA_USER' <<< "$dc_json")
     pma_user="$(eval echo "$pma_user")"
 
-    cat <<-PMA_USER > "${WORKSPACE_DIR}/mysql/loader/phpmyadmin_user.sh"
+    if [ "${pma_dbuser:-}" ] && [ "${pma_dbpass:-}" ]; then
+        cat <<-PMA_USER > "${WORKSPACE_DIR}/mysql/loader/phpmyadmin_user.sh"
 #!/bin/bash
 
 cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
@@ -47,7 +48,10 @@ cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
 EOSQL
 
 PMA_USER
-
+    else
+        [ "${pma_dbuser:-}" ] || echo 'pma_dbuser not defined: connection to MYSQL not created'
+        [ "${pma_dbpass:-}" ] || echo 'pma_dbpass not defined: connection to MYSQL not created'
+    fi
     touch "$isIinitialized"
 fi
 

@@ -36,7 +36,7 @@ if [ ! -f "$isIinitialized" ]; then
     declare pma_user=$(jq --compact-output --monochrome-output --raw-output '.services.phpmyadmin.environment.PMA_USER' <<< "$dc_json")
     pma_user="$(eval echo "$pma_user")"
 
-    if [ "${pma_dbuser:-}" ] && [ "${pma_dbpass:-}" ]; then
+    if [ "${pma_dbuser:-null}" != 'null' ] && [ "${pma_dbpass:-}" ]; then
         cat <<-PMA_USER > "${WORKSPACE_DIR}/mysql/loader/phpmyadmin_user.sh"
 #!/bin/bash
 

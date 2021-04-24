@@ -40,7 +40,7 @@ if [ ! -f "$isIinitialized" ]; then
     declare nconf_dbuser=$(jq --compact-output --monochrome-output --raw-output '.services.nagios.environment.NCONF_DBUSER' <<< "$dc_json")
     nconf_dbuser="$(eval echo "$nconf_dbuser")"
 
-    if [ "${nconf_dbuser:-}" ] && [ "${nconf_dbpass:-}" ]; then
+    if [ "${nconf_dbuser:-null}" != 'null' ] && [ "${nconf_dbpass:-}" ]; then
         cat <<-NCONF_DBUSER > "${WORKSPACE_DIR}/mysql/loader/nconf_user.sh"
 #!/bin/bash
 

@@ -1,5 +1,5 @@
 completion_msg:
-    - "If this setup includes a web server, please open the following URL in your browser: http://$(hostname -f)"
+    - "If this setup includes a web server, please open the following URL in your browser: https://$(hostname -f)"
 
 container_os: alpine
 
@@ -17,7 +17,7 @@ thirdparty_versions:
 versions:
     repo: https://github.com/ballab1/versions
     dir: ${WORKSPACE_DIR}/.versions
-    commit: 3012e5d11de8b35e485bcd4e7a903e720c75a072
+    commit: 3ec07dbb42ca31c47d7912b8bcd8df4133e86190
     branch: dev
 
 default_args:

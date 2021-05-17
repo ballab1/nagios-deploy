@@ -6,6 +6,9 @@
 **/*.log
 **/*.tgz
 **/*.zip
+*.tar
+*.tgz
+*.gz
 
 # OSX
 **/.DS_Store

@@ -6,6 +6,7 @@ services:
         container_name: mysql
         dns: 10.3.1.1
         dns_search:
+            - ${HOST_IP}
             - ubuntu.home
             - home
         environment:
@@ -15,7 +16,7 @@ services:
             MYSQL_USER: ${CFG_USER:?}
             TZ: America/New_York
         hostname: mysql.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}thirdparty/mysql:${MYSQL_VERSION:-5.7.23}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}thirdparty/mysql:${MYSQL_VERSION:-5.7.23}
         logging:
             driver: json-file
             options:
@@ -68,7 +69,7 @@ services:
         extra_hosts:
             - "docker-host:${HOST_IP:?}"
         hostname: nagios.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-9c6389cf8dd3645379a2abed2dafce381c6bc87ea99745b32d7f14cf58f0595a}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-7e3465df6898d1403aefedb13393544b37a158b2db16332b86bd5a4ce94b9d7d}
         logging:
             driver: json-file
             options:
@@ -112,7 +113,7 @@ services:
 #            NGINX_DEBUG: 1
 #            PWD_PROTECTED: 'true'
         hostname: nginx.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.18.0}:${CONTAINER_TAG:-840e960388da34b8eba79b024190c2099d7d206cc3df3b288e02d5ceb1870df6}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.20.0}:${CONTAINER_TAG:-13a4fd4d2eea1c5db6fec557dafb17eed1fd2ae6685f8ccd6cf6f9201866e6ae}
         logging:
             driver: json-file
             options:
@@ -161,7 +162,7 @@ services:
 #            NGINX_DEBUG: 1
 #            PMA_VERBOSE: 1
         hostname: phpmyadmin.s4.home
-        image: ${DOCKER_REGISTRY:-ubuntu-s2.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.1.0}:${CONTAINER_TAG:-d2c827bbb717820f0396b209dbf85582446233c735318c510d849739a4e1bcb2}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.1.0}:${CONTAINER_TAG:-01bedd01e1f6152314fac2f1d092cb8648ea38df451ea8d36de1da1414d9bdd8}
         links:
             - mysql:mysql
         logging:
@@ -190,7 +191,7 @@ networks:
    nagios-net:
        ipam:
            config:
-               - subnet: 192.168.96.0/24
+               - subnet: 172.31.254.0/24
        name: nagios-container-net
 
 

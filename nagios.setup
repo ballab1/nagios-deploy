@@ -46,9 +46,11 @@ if [ ! -f "$isIinitialized" ]; then
 
 cat <<-EOSQL | mysql -uroot -p${mysql_root_password} -hlocalhost
     CREATE DATABASE IF NOT EXISTS nconf;
+    CREATE DATABASE IF NOT EXISTS nagios_test;
     CREATE USER IF NOT EXISTS '${nconf_dbuser}'@'%';
     SET PASSWORD FOR '${nconf_dbuser}'@'%' = PASSWORD('${nconf_dbpass}');
     GRANT ALL ON nconf.* TO '${nconf_dbuser}'@'%';
+    GRANT ALL ON nagios_test.* TO '${nconf_dbuser}'@'%';
 EOSQL
 
 NCONF_DBUSER

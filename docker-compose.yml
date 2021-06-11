@@ -69,7 +69,7 @@ services:
         extra_hosts:
             - "docker-host:${HOST_IP:?}"
         hostname: nagios.s4.home
-        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-7e3465df6898d1403aefedb13393544b37a158b2db16332b86bd5a4ce94b9d7d}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-fa24ff3c9b5ccc908d07084604635226979fc6a6b16a66ea40ef55caa0a71227}
         logging:
             driver: json-file
             options:
@@ -113,7 +113,7 @@ services:
 #            NGINX_DEBUG: 1
 #            PWD_PROTECTED: 'true'
         hostname: nginx.s4.home
-        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.20.0}:${CONTAINER_TAG:-13a4fd4d2eea1c5db6fec557dafb17eed1fd2ae6685f8ccd6cf6f9201866e6ae}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.20.1}:${CONTAINER_TAG:-47f6a49d856b324acdfe0484822869863ce68a61d84f1a1dc7b35fa1b318457a}
         logging:
             driver: json-file
             options:
@@ -162,7 +162,7 @@ services:
 #            NGINX_DEBUG: 1
 #            PMA_VERBOSE: 1
         hostname: phpmyadmin.s4.home
-        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.1.0}:${CONTAINER_TAG:-01bedd01e1f6152314fac2f1d092cb8648ea38df451ea8d36de1da1414d9bdd8}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.1.1}:${CONTAINER_TAG:-246d345a8e034d25fb93b939371c58dcf6fd721bb36edc9365ef7fbbb69a7948}
         links:
             - mysql:mysql
         logging:

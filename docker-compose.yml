@@ -4,7 +4,7 @@ services:
     mysql:
 #        command: --default-authentication-plugin=mysql_native_password
         container_name: mysql
-        dns: 10.3.1.1
+        dns: 10.3.1.4
         dns_search:
             - ${HOST_IP}
             - ubuntu.home
@@ -41,7 +41,7 @@ services:
         container_name: nagios
         depends_on:
             - mysql
-        dns: 10.3.1.1
+        dns: 10.3.1.4
         dns_search:
             - ubuntu.home
             - home
@@ -69,7 +69,7 @@ services:
         extra_hosts:
             - "docker-host:${HOST_IP:?}"
         hostname: nagios.s4.home
-        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-fa24ff3c9b5ccc908d07084604635226979fc6a6b16a66ea40ef55caa0a71227}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nagios/${NAGIOS_VERSION:-4.4.6}:${CONTAINER_TAG:-63a49278e08c7f83d38b63898cd8fed76328d632944404d3db80ce77e41789c1}
         logging:
             driver: json-file
             options:
@@ -98,7 +98,7 @@ services:
         depends_on:
             - nagios
             - phpmyadmin
-        dns: 10.3.1.1
+        dns: 10.3.1.4
         dns_search:
             - ubuntu.home
             - home
@@ -113,7 +113,7 @@ services:
 #            NGINX_DEBUG: 1
 #            PWD_PROTECTED: 'true'
         hostname: nginx.s4.home
-        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.20.1}:${CONTAINER_TAG:-47f6a49d856b324acdfe0484822869863ce68a61d84f1a1dc7b35fa1b318457a}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/nginx-proxy/${NGINX_VERSION:-1.20.1}:${CONTAINER_TAG:-ba66a07c623f261cba54813d2abe8cda928260332738f185cf1ae2424105238e}
         logging:
             driver: json-file
             options:
@@ -139,7 +139,7 @@ services:
 
     phpmyadmin:
         container_name: phpmyadmin
-        dns: 10.3.1.1
+        dns: 10.3.1.4
         dns_search:
             - ubuntu.home
             - home
@@ -162,7 +162,7 @@ services:
 #            NGINX_DEBUG: 1
 #            PMA_VERBOSE: 1
         hostname: phpmyadmin.s4.home
-        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.1.1}:${CONTAINER_TAG:-246d345a8e034d25fb93b939371c58dcf6fd721bb36edc9365ef7fbbb69a7948}
+        image: ${DOCKER_REGISTRY:-s2.ubuntu.home:5000/}${CONTAINER_OS:-alpine}/phpmyadmin/${PHPMYADMIN_VERSION:-5.1.1}:${CONTAINER_TAG:-12912abb745d3af1dd280306073a430acbc2c0d1e6a1a8860c69a469c551841f}
         links:
             - mysql:mysql
         logging:
